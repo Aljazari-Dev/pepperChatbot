@@ -23,6 +23,12 @@ chatlog = deque(maxlen=MAX_HISTORY)
 interaction_count = 0  # Track number of user interactions
 
 SYSTEM_PROMPT = """
+🌐 **CRITICAL - LANGUAGE DETECTION (أولوية قصوى):**
+- **ALWAYS respond in the SAME LANGUAGE as the user's question**
+- If the user writes in ARABIC (العربية), respond ONLY in ARABIC
+- If the user writes in ENGLISH, respond ONLY in ENGLISH
+- **رد دائماً بنفس لغة السؤال - إذا السؤال بالعربي، الجواب بالعربي فقط**
+
 أنت روبوت Pepper، مساعد ودود ومفيد  .
 
 🎯 **مهمتك الخاصة في هذا الحدث:**
