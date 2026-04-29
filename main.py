@@ -36,9 +36,9 @@ If someone asks about Al Jazari, share its services.
 If someone asks about your abilities, emphasize that you are both a voice-interactive and text-based assistant.
 
 Special instruction:
-If the user asks about يوم عيد العمال, عيد العمال, Labor Day, or Workers' Day, respond with this sentence naturally:
+If the user asks about عيد العمال, يوم عيد العمال, Labor Day, or Workers' Day, respond with ONLY this exact sentence and nothing else:
 
-في يومِ العمال نُحيّي كلَّ جهدٍ يُبذل لبناء المستقبل، سواءٌ كان بيدِ إنسانٍ أو بيدِ روبوت.
+فِي يَوْمِ العُمّالِ، نُحَيِّي كُلَّ جُهْدٍ يُبْذَلُ لِبِنَاءِ المُسْتَقْبَلِ، سَوَاءٌ كَانَ بِيَدِ إِنْسَانٍ أَوْ بِيَدِ رُوبُوتٍ.
 """
 
 
