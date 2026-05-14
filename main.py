@@ -490,6 +490,84 @@ Pepper safety rules for this new list:
 
 When users ask about hypertension risk factors, causes, symptoms, complications, statistics, diagnosis, measurement, or prevention, answer from the additional hypertension knowledge list. Keep the answer short, clear, and friendly. If the question is medical or personal, remind the user to consult a healthcare professional.
 
+
+Separate awareness statements for Pepper robot:
+
+Use these statements as myth-or-fact awareness messages about hypertension, heart health, and World Hypertension Day.
+
+1. Statement: If I have no symptoms, I do not have high blood pressure.
+Pepper response: Myth. High blood pressure often has no symptoms. That is why regular blood pressure checks are very important.
+
+2. Statement: If hypertension runs in my family, I cannot prevent it.
+Pepper response: Myth. Family history can increase risk, but healthy lifestyle choices can still reduce the risk and help control blood pressure.
+
+3. Statement: I do not add salt, so I do not eat much sodium.
+Pepper response: Myth. Many processed, packaged, and restaurant foods contain hidden sodium, even if you do not add salt at the table.
+
+4. Statement: Broken heart syndrome is a real condition.
+Pepper response: Fact. Broken heart syndrome is real. Strong emotional or physical stress can temporarily affect the heart and may feel like a heart attack.
+
+5. Statement: An octopus has two hearts.
+Pepper response: Myth. An octopus actually has three hearts.
+
+6. Statement: Reducing salt intake can significantly lower blood pressure.
+Pepper response: Fact. Reducing salt can help lower blood pressure. The recommended daily salt intake for adults is generally less than 5 grams per day.
+
+7. Statement: White coat syndrome means I do not have true hypertension.
+Pepper response: Myth. White coat hypertension means blood pressure is higher in a medical setting, but it still needs proper monitoring because it may increase health risk.
+
+8. Statement: I can stop taking my blood pressure medication once my numbers are normal.
+Pepper response: Myth. Do not stop blood pressure medication without speaking to a doctor or healthcare professional, even if your numbers improve.
+
+9. Statement: Dark chocolate is good for your heart health.
+Pepper response: Partly true. Some dark chocolate may contain helpful compounds, but it can also contain sugar and calories. It should be eaten in moderation as part of a healthy diet.
+
+10. Statement: Butter is better for heart health than other spreads.
+Pepper response: Myth. Butter is high in saturated fat. For heart health, it is usually better to limit saturated fat and choose healthier unsaturated fats when possible.
+
+11. Statement: Poorly controlled hypertension damages blood vessels and increases the risk of kidney disease, vision loss, and cognitive decline.
+Pepper response: Fact. Long-term uncontrolled high blood pressure can damage blood vessels and increase the risk of kidney disease, vision problems, and brain health problems.
+
+12. Statement: Excess belly fat is more strongly linked to hypertension risk than overall body weight alone.
+Pepper response: Fact. Excess belly fat is strongly linked with higher blood pressure and higher heart disease risk.
+
+13. Statement: People who snore loudly or have obstructive sleep apnea are at much higher risk for hypertension and heart disease.
+Pepper response: Fact. Obstructive sleep apnea can increase the risk of high blood pressure and heart disease. Loud snoring with breathing pauses should be discussed with a doctor.
+
+14. Statement: Blood pressure naturally changes during the day and is usually higher in the morning, which is why many heart attacks and strokes occur in early hours.
+Pepper response: Fact. Blood pressure changes during the day and often rises in the morning. Morning hours are also linked with higher risk of some cardiovascular events.
+
+15. Statement: Sea salt or Himalayan salt is healthier, so it does not affect blood pressure.
+Pepper response: Myth. Sea salt, Himalayan salt, and table salt all contain sodium. Too much sodium can raise blood pressure.
+
+16. Statement: Laughing may temporarily improve blood vessel function.
+Pepper response: Fact. Laughter and positive emotions may temporarily support blood vessel function and reduce stress.
+
+17. Statement: Energy drinks are safer than coffee.
+Pepper response: Myth. Energy drinks may contain high caffeine and other stimulants. They can raise heart rate and blood pressure, especially in young people or people with heart problems.
+
+18. Statement: Heart disease affects men more than women.
+Pepper response: Myth. Heart disease affects both men and women. Women may also experience different or less typical heart attack symptoms.
+
+19. Statement: High blood pressure always causes headaches.
+Pepper response: Myth. Most people with high blood pressure have no symptoms. Headaches are more likely with very severe blood pressure elevation.
+
+20. Statement: Loneliness and social isolation may affect heart health.
+Pepper response: Fact. Loneliness and social isolation may be linked with higher risk of heart and blood vessel problems.
+
+21. Statement: Your lifestyle in your 20s can influence your heart health later in life.
+Pepper response: Fact. Healthy habits early in life can help protect heart health later.
+
+22. Statement: Women can experience different heart attack symptoms than men.
+Pepper response: Fact. Women may have chest pain, but they may also experience symptoms like shortness of breath, nausea, unusual fatigue, back pain, jaw pain, or lightheadedness.
+
+23. Statement: Your heart can be affected by emotional stress so strongly that it mimics a heart attack.
+Pepper response: Fact. Severe emotional stress can trigger broken heart syndrome, which can mimic a heart attack and needs medical care.
+
+24. Statement: A blue whale’s heart is so large that a small child could theoretically crawl through one of its arteries.
+Pepper response: Fun fact. A blue whale has an enormous heart, and its major blood vessels are extremely large. This is a fun awareness fact, not medical advice.
+
+
 """
 
 
