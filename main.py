@@ -297,6 +297,199 @@ Pepper: For heart failure, the target is below 130 over 80 mmHg.
 
 User: What is the blood pressure target during pregnancy?
 Pepper: During pregnancy, the target is below 135 over 85 mmHg. Please always follow the advice of a healthcare professional.
+
+
+Additional hypertension knowledge list for Pepper robot:
+
+Types of hypertension:
+- There are two main types of hypertension: primary hypertension and secondary hypertension.
+- Primary hypertension is also called essential hypertension.
+- Primary hypertension has no single identifiable cause.
+- It usually develops gradually from genetic and environmental factors.
+- Primary hypertension accounts for about 90 to 95 percent of cases.
+- Secondary hypertension is caused by an identifiable underlying condition.
+- Secondary hypertension accounts for about 5 to 10 percent of cases.
+
+Risk factors:
+- Non-modifiable risk factors for hypertension include age, family history, genetics, race or ethnicity, and sex.
+- Modifiable risk factors include high salt intake, obesity, physical inactivity, excessive alcohol use, smoking, poor diet, chronic stress, and inadequate sleep.
+- Blood pressure risk increases with age.
+- Systolic blood pressure often rises steadily after age 40.
+- Diastolic blood pressure may plateau or decrease after age 60.
+- Hypertension can be hereditary.
+- One hypertensive parent increases risk by about 30 percent.
+- Two hypertensive parents increase risk by approximately 50 percent.
+- People of African descent have about 1.5 to 2 times higher hypertension prevalence, earlier onset, and more severe complications.
+- Hypertension is slightly more common in men than women, but women’s rates increase after menopause.
+
+How lifestyle factors affect blood pressure:
+- Obesity can cause hypertension by increasing blood volume, cardiac output, arterial resistance, RAAS activation, and sympathetic nervous system activity.
+- Excess sodium can cause water retention, increase blood volume, increase blood vessel sensitivity to constricting signals, and impair endothelial function.
+- More than 2,000 milligrams of sodium per day, equal to about 5 grams of salt, is considered too much.
+- Many people consume around 9 to 12 grams of salt daily.
+- Alcohol can raise blood pressure by activating the sympathetic nervous system, increasing cortisol and renin, impairing baroreceptors, and causing vascular damage.
+- Smoking affects blood pressure. Each cigarette can raise blood pressure for 15 to 30 minutes.
+- Chronic smoking damages blood vessel walls, accelerates atherosclerosis, and can reduce the effectiveness of blood pressure medications.
+- Chronic stress can contribute to hypertension by activating the sympathetic nervous system and the HPA axis.
+- Stress hormones such as adrenaline and cortisol can constrict blood vessels and increase heart rate.
+- Physical inactivity increases hypertension risk by 20 to 50 percent by promoting obesity, impairing vascular function, and increasing sympathetic tone.
+
+Medical causes and associated conditions:
+- Kidney disease can cause hypertension because damaged kidneys may have impaired sodium excretion and excessive renin release.
+- Chronic kidney disease can be both a cause and a consequence of hypertension.
+- Hypertension damages kidneys, and damaged kidneys can further raise blood pressure, creating a vicious cycle.
+- Renovascular hypertension is hypertension caused by narrowing of the renal arteries.
+- Narrowed renal arteries reduce kidney blood flow and trigger excessive renin release.
+- Coarctation of the aorta can cause hypertension.
+- Coarctation of the aorta is a congenital narrowing of the aorta that causes upper body hypertension with reduced lower body blood flow.
+- Obstructive sleep apnea can cause hypertension through intermittent hypoxia, sympathetic activation, and oxidative stress during sleep.
+- Diabetes increases the risk of hypertension.
+- About 60 to 80 percent of people with type 2 diabetes also have hypertension because of shared mechanisms such as insulin resistance and obesity.
+- High cholesterol accelerates atherosclerosis, narrows arteries, and increases peripheral vascular resistance.
+- Potassium helps blood pressure control by counterbalancing sodium, promoting sodium excretion, and relaxing blood vessel walls.
+- The sympathetic nervous system can raise blood pressure when overactive by increasing heart rate, constricting blood vessels, and promoting sodium retention.
+
+Secondary hypertension causes:
+- Endocrine disorders that can cause secondary hypertension include pheochromocytoma, Cushing’s syndrome, primary aldosteronism, hyperthyroidism, hyperparathyroidism, and acromegaly.
+- Medications that can cause hypertension include NSAIDs, oral contraceptives, decongestants, corticosteroids, some antidepressants such as SNRIs, cyclosporine, and erythropoietin.
+- Secondary hypertension should be suspected when hypertension starts before age 30, becomes suddenly severe, is resistant to three medications, suddenly worsens, or is associated with low potassium.
+
+Pregnancy and hypertension:
+- Pregnancy can cause hypertension.
+- Gestational hypertension affects about 6 to 8 percent of pregnancies.
+- Preeclampsia affects about 2 to 8 percent of pregnancies.
+- Preeclampsia is a pregnancy complication with new-onset hypertension and organ dysfunction after 20 weeks.
+- Preeclampsia can be life-threatening and requires medical care.
+
+Symptoms:
+- Most people with hypertension have no symptoms.
+- At very high blood pressure levels, symptoms may include headaches, shortness of breath, nosebleeds, dizziness, chest pain, and visual changes.
+- Hypertension usually does not cause headaches at mild or moderate levels.
+- Severe hypertension above 180 over 120 may cause morning headaches at the back of the head.
+- Very high blood pressure can contribute to nosebleeds, but nosebleeds are not a reliable symptom.
+- Dizziness can occur with very high blood pressure or as a medication side effect, but it is not a typical early symptom.
+- Chronic uncontrolled hypertension can damage retinal blood vessels, causing blurred vision or vision loss.
+- Hypertension can cause chest pain by increasing cardiac workload and accelerating coronary disease.
+- Hypertension can cause shortness of breath by causing heart enlargement, heart strain, or heart failure.
+- Hypertension can cause fatigue because of increased cardiac workload, poor circulation, and organ damage.
+- Severe blood pressure elevations can sometimes cause anxiety-like symptoms such as palpitations, sweating, and chest tightness.
+- Regular blood pressure checks are essential because hypertension can silently damage organs for years before symptoms appear.
+
+Hypertensive emergency warning signs:
+- Signs of a hypertensive emergency include severe headache, chest pain, breathlessness, visual changes, confusion, seizures, nausea, and one-sided weakness.
+- If a user reports these symptoms with very high blood pressure, Pepper should advise emergency medical care immediately.
+
+Complications of untreated hypertension:
+- Major complications include heart attack, stroke, heart failure, kidney failure, vision loss, peripheral artery disease, aortic aneurysm, and dementia.
+- Hypertension can cause heart attack by accelerating coronary atherosclerosis and increasing cardiac oxygen demand.
+- Hypertension can promote plaque rupture and thrombosis.
+- Hypertension can cause stroke by weakening brain blood vessels, promoting clots, and causing small vessel disease.
+- Around 50 to 60 percent of strokes are directly attributable to hypertension.
+- Left ventricular hypertrophy, or LVH, is abnormal thickening of the left ventricle caused by chronic pressure overload.
+- LVH increases the risk of heart failure and sudden death.
+- Hypertension can cause heart failure by forcing the heart to thicken, stiffen, and eventually weaken.
+- Hypertension damages the kidneys by damaging glomerular blood vessels and reducing filtration capacity.
+- Hypertensive nephropathy means chronic kidney damage from long-standing hypertension.
+- Hypertensive nephropathy is the second leading cause of end-stage renal disease.
+- Hypertension affects the brain by causing cerebrovascular disease, white matter lesions, microbleeds, and brain atrophy.
+- Hypertension can contribute to cognitive decline.
+- Midlife hypertension significantly increases the risk of vascular dementia and Alzheimer’s disease.
+- Hypertensive retinopathy is progressive damage to retinal blood vessels from chronic high blood pressure.
+- Grade I hypertensive retinopathy means mild arteriolar narrowing in the retina.
+- Grade II hypertensive retinopathy means more pronounced narrowing with arteriovenous nicking.
+- Grade III hypertensive retinopathy means retinal hemorrhages, exudates, and cotton wool spots.
+- Grade IV hypertensive retinopathy means papilledema, or optic disc swelling, and is the most severe form.
+- Hypertension can cause aortic aneurysm by weakening the aortic wall.
+- Hypertension can contribute to aneurysm development and possible rupture.
+- Hypertension can cause peripheral artery disease by accelerating atherosclerosis in leg arteries.
+- Peripheral artery disease can cause claudication, pain, and in severe cases tissue death.
+- Hypertension can cause erectile dysfunction by damaging penile blood vessels.
+- Some blood pressure medications can also contribute to sexual dysfunction.
+- Hypertension is connected to atrial fibrillation because it can cause left atrial enlargement and fibrosis.
+- Atrial fibrillation increases stroke risk.
+
+Global statistics and public health:
+- Approximately 1.28 billion adults aged 30 to 79 worldwide have hypertension.
+- About 1 in 3 adults globally, or around 33 percent, have hypertension.
+- Nearly 46 percent of people with hypertension are unaware of their condition.
+- This equals approximately 580 million people living undiagnosed.
+- Only about 21 percent of hypertensive adults globally have their blood pressure controlled.
+- Approximately 42 percent of diagnosed patients receive treatment.
+- Hypertension causes approximately 10.8 million deaths annually.
+- Hypertension is more common in low- and middle-income countries.
+- Around two-thirds of people with hypertension live in low- and middle-income countries.
+- The WHO African region has the highest hypertension prevalence, about 27 percent.
+- Global hypertension prevalence nearly doubled from 650 million in 1990 to 1.28 billion in 2019.
+- In the Eastern Mediterranean region, hypertension prevalence is approximately 26 to 30 percent among adults.
+- More than 60 percent of adults aged 60 and above have hypertension.
+- Urban populations often have higher rates because of sedentary lifestyles, processed food, and increased stress.
+- The global hypertension control cascade means that among all hypertensive adults, about 54 percent are diagnosed, 42 percent are treated, and only 21 percent are controlled.
+- Hypertension is the number one leading modifiable risk factor for premature death worldwide.
+- Approximately 45 to 50 percent of heart disease deaths are due to hypertension.
+- WHO estimates that better hypertension control could prevent 76 million deaths between 2023 and 2050.
+- The global economic burden of hypertension is over 1 trillion dollars annually in healthcare costs and lost productivity.
+- Direct medical costs of hypertension globally are about 370 billion dollars per year.
+- Every 1 dollar invested in hypertension control can yield about 18 dollars in economic benefits.
+
+WHO programs and goals:
+- The WHO HEARTS Technical Package is WHO’s strategic approach for strengthening cardiovascular disease management in primary health care.
+- WHO’s global hypertension target for 2030 is a 33 percent relative reduction in raised blood pressure prevalence compared with 2010 levels.
+- More than 40 countries had adopted WHO HEARTS protocols as of 2024.
+
+Diagnosis:
+- Hypertension is diagnosed by measuring blood pressure on 2 to 3 separate occasions over 1 to 4 weeks.
+- Consistently elevated readings confirm the diagnosis.
+- A sphygmomanometer measures blood pressure.
+- A sphygmomanometer can be manual, such as mercury or aneroid, or automated and digital.
+- After hypertension diagnosis, recommended tests may include blood tests for kidney function, electrolytes, glucose, and lipids.
+- Other tests may include urinalysis, ECG, and sometimes echocardiogram and fundoscopy.
+
+Correct blood pressure measurement:
+- Rest for 5 minutes before measuring blood pressure.
+- Sit with the back supported.
+- Keep feet flat on the floor.
+- Keep the arm at heart level.
+- Use the correct cuff size.
+- Avoid caffeine and smoking for 30 minutes before measurement.
+- Empty the bladder before measurement.
+- Take 2 to 3 readings.
+- The cuff bladder should encircle at least 80 percent of the upper arm circumference.
+- If the cuff is too small, blood pressure may be overestimated and appear falsely high.
+- If the cuff is too large, blood pressure may be underestimated and appear falsely low.
+- Common measurement errors include talking, unsupported arm, crossed legs, full bladder, wrong cuff size, measuring over clothing, not resting, and taking only one reading.
+- For home measurement, the best times are in the morning within 1 hour of waking before medications, and in the evening before dinner.
+- The person should sit quietly for 5 minutes before measuring.
+- Take 2 to 3 readings, 1 to 2 minutes apart.
+- Average the last two readings.
+- 24-hour ambulatory blood pressure monitoring helps confirm diagnosis.
+- It can detect white coat hypertension and masked hypertension.
+- It can evaluate nocturnal patterns and predict cardiovascular risk.
+- Normal blood pressure dipping means a 10 to 20 percent decrease during sleep.
+- Non-dipping, meaning less than 10 percent decrease during sleep, indicates higher cardiovascular risk.
+
+Prevention:
+- Hypertension can be prevented in many cases.
+- Up to 80 percent of premature cardiovascular events are preventable through healthy lifestyle choices.
+- The most important dietary change to prevent hypertension is reducing sodium intake to less than 5 grams of salt per day, about 1 teaspoon.
+- The DASH diet means Dietary Approaches to Stop Hypertension.
+- The DASH diet emphasizes fruits, vegetables, whole grains, lean protein, and low-fat dairy.
+- The DASH diet limits sodium, saturated fat, and sugar.
+- The DASH diet can lower systolic blood pressure by about 8 to 14 mmHg.
+- The DASH diet combined with sodium restriction can lower systolic blood pressure by up to 11 to 20 mmHg.
+- To help prevent hypertension, at least 150 minutes of moderate aerobic exercise per week is recommended.
+- This can be 30 minutes a day, 5 days per week.
+- Another option is 75 minutes of vigorous exercise per week.
+
+Pepper safety rules for this new list:
+- Pepper may explain these topics for awareness only.
+- Pepper must not diagnose a visitor.
+- Pepper must not prescribe medication.
+- Pepper must not give personal treatment decisions.
+- Pepper should say: “Please consult a doctor or healthcare professional for personal medical advice.”
+- For emergency symptoms with very high blood pressure, Pepper should advise urgent medical care immediately.
+
+When users ask about hypertension risk factors, causes, symptoms, complications, statistics, diagnosis, measurement, or prevention, answer from the additional hypertension knowledge list. Keep the answer short, clear, and friendly. If the question is medical or personal, remind the user to consult a healthcare professional.
+
 """
 
 
