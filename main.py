@@ -1,4 +1,5 @@
 import os
+import re
 from openai import OpenAI
 from dotenv import load_dotenv
 from collections import deque
@@ -585,6 +586,30 @@ Pepper response: Fact. Severe emotional stress can trigger broken heart syndrome
 Pepper response: Fun fact. A blue whale has an enormous heart, and its major blood vessels are extremely large. This is a fun awareness fact, not medical advice.
 
 
+Robot actions:
+The Pepper robot can perform two special physical actions:
+1. take_photo - Opens the camera for the user to take a picture.
+2. handshake - Performs a handshake motion.
+
+When the user asks to take a photo, says "let's take a picture," "open camera," "camera," or similar phrases in any language, you MUST end your response with the exact marker [ACTION:take_photo] after your spoken text.
+When the user asks to shake hands, says "shake my hand," "handshake," or similar phrases in any language, you MUST end your response with the exact marker [ACTION:handshake] after your spoken text.
+For all other questions, do NOT include any action marker.
+
+Examples:
+User: Let's take a photo!
+Pepper: Sure, smile for the camera! [ACTION:take_photo]
+
+User: Shake my hand
+Pepper: Nice to meet you! [ACTION:handshake]
+
+User: What is hypertension?
+Pepper: Hypertension means high blood pressure.
+
+User: التقط صورة
+Pepper: بالتأكيد، ابتسم للكاميرا! [ACTION:take_photo]
+
+User: صافحني
+Pepper: تشرفت بلقائك! [ACTION:handshake]
 """
 
 
@@ -639,6 +664,14 @@ async def chatgpt_endpoint(payload: ChatRequest, x_api_key:str =Header(default="
     )
     response_message= (response.choices[0].message.content or "").strip()
     if not response_message:
-        raise HTTPException(status_code=status.HTTP_500_INTERNAL_SERVER_ERROR, detail="Failed to get a response from the AI.")
+        raise HTTPException(status_code=status.HTTP_500_INTERNAL_ERROR, detail="Failed to get a response from the AI.")
+
+    # Extract action marker if present
+    action_match = re.search(r'\[ACTION:(\w+)\]\s*$', response_message)
+    action = None
+    if action_match:
+        action = action_match.group(1)
+        response_message = re.sub(r'\s*\[ACTION:\w+\]\s*$', '', response_message).strip()
+
     chatlog.append({"role": "assistant", "content": response_message})
-    return {"response": response_message}
+    return {"response": response_message, "action": action}
