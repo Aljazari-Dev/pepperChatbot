@@ -7,10 +7,13 @@ import json
 import fastapi
 from fastapi import FastAPI, Request, HTTPException, status , Header
 from pydantic import BaseModel
+import requests
 
 load_dotenv()
 api_key_access=os.getenv("api_access_key")
 API_KEY = os.getenv("OPENAI_API_KEY")
+ROBOT_IP = os.getenv("ROBOT_IP", "192.168.1.100")
+ROBOT_SPEAK_PORT = int(os.getenv("ROBOT_SPEAK_PORT", "8080"))
 if not API_KEY:
     raise ValueError("OPENAI_API_KEY not found in environment variables.")
 
@@ -338,9 +341,34 @@ ieu1959
 class ChatRequest(BaseModel):
     query: str
 
+class SpeakRequest(BaseModel):
+    text: str
+    robot_ip: str = None
+
 @app.get("/")
 async def root():
     return {"message": "Hello World"}
+
+
+def send_speak_to_robot(text: str, robot_ip: str = None):
+    ip = robot_ip or ROBOT_IP
+    url = f"http://{ip}:{ROBOT_SPEAK_PORT}/speak"
+    try:
+        response = requests.post(url, json={"text": text}, timeout=5)
+        return response.json()
+    except Exception as e:
+        return {"error": str(e)}
+
+
+@app.post("/speak")
+async def speak_endpoint(payload: SpeakRequest, x_api_key:str =Header(default="")):
+    if api_key_access != x_api_key:
+        raise HTTPException(status_code=status.HTTP_401_UNAUTHORIZED, detail="UNAUTHORIZED")
+    text = payload.text.strip()
+    if not text:
+        raise HTTPException(status_code=status.HTTP_400_BAD_REQUEST, detail="text is required.")
+    result = send_speak_to_robot(text, payload.robot_ip)
+    return {"status": "sent", "result": result}
 
 
 
