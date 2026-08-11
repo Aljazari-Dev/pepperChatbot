@@ -7,7 +7,8 @@ import json
 import fastapi
 from fastapi import FastAPI, Request, HTTPException, status , Header
 from pydantic import BaseModel
-import requests
+import urllib.request
+import urllib.error
 
 load_dotenv()
 api_key_access=os.getenv("api_access_key")
@@ -353,9 +354,18 @@ async def root():
 def send_speak_to_robot(text: str, robot_ip: str = None):
     ip = robot_ip or ROBOT_IP
     url = f"http://{ip}:{ROBOT_SPEAK_PORT}/speak"
+    payload = json.dumps({"text": text}).encode("utf-8")
+    req = urllib.request.Request(
+        url,
+        data=payload,
+        headers={"Content-Type": "application/json"},
+        method="POST",
+    )
     try:
-        response = requests.post(url, json={"text": text}, timeout=5)
-        return response.json()
+        with urllib.request.urlopen(req, timeout=5) as response:
+            return json.loads(response.read().decode("utf-8"))
+    except urllib.error.URLError as e:
+        return {"error": str(e)}
     except Exception as e:
         return {"error": str(e)}
 
