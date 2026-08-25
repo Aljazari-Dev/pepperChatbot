@@ -108,9 +108,9 @@ async def chatgpt_endpoint(payload: ChatRequest, x_api_key:str =Header(default="
     
     # Every 2-3 interactions, add visitor guidance instruction
     if interaction_count % 2 == 0 or interaction_count % 3 == 0:
+        pass
 
-    
-    messages= [{"role": "system", "content": SYSTEM_PROMPT}]
+    messages = [{"role": "system", "content": SYSTEM_PROMPT}]
     messages.extend(list(chatlog))
     response= client.chat.completions.create(
         model="gpt-4o-mini",
