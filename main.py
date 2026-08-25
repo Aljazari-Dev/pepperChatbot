@@ -115,7 +115,8 @@ async def chatgpt_endpoint(payload: ChatRequest, x_api_key:str =Header(default="
     response= client.chat.completions.create(
         model="gpt-5-nano",
         messages= messages,
-        max_completion_tokens=200 # Allow complete short answers (1-2 sentences) without cutting off
+        reasoning_effort="minimal",
+        max_completion_tokens=1000 # Reasoning models spend tokens on internal reasoning
     )
     response_message= (response.choices[0].message.content or "").strip()
     if not response_message:
