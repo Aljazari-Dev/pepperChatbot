@@ -113,7 +113,7 @@ async def chatgpt_endpoint(payload: ChatRequest, x_api_key:str =Header(default="
     messages = [{"role": "system", "content": SYSTEM_PROMPT}]
     messages.extend(list(chatlog))
     response= client.chat.completions.create(
-        model="gpt-4o-mini",
+        model="gpt-5-nano",
         messages= messages,
         temperature=0.7,
         max_tokens=200 # Allow complete short answers (1-2 sentences) without cutting off
