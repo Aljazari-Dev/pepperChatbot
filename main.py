@@ -105,23 +105,12 @@ async def chatgpt_endpoint(payload: ChatRequest, x_api_key:str =Header(default="
     chatlog.append({"role": "user", "content": user_message})
     
     # Build dynamic system prompt with periodic instructions
-    dynamic_prompt = SYSTEM_PROMPT
     
     # Every 2-3 interactions, add visitor guidance instruction
     if interaction_count % 2 == 0 or interaction_count % 3 == 0:
-        dynamic_prompt += """
 
-🔔 **تذكير مهم للرد الحالي:**
-بعد الإجابة على سؤال المستخدم، أضف إرشادات الزوار التالية بشكل طبيعي:
-
-لخدمتكم بشكل أفضل:
-- التسجيل متاح في منطقة الاستقبال
-- جدول الجلسات متوفر لدى فريق التنظيم  
-- في حال احتجتم أي مساعدة، الرجاء التواصل مع فريق المتطوعين أو الاستعلامات
-شكرًا لتعاونكم ونتمنى لكم مؤتمرًا مميزًا.
-"""
     
-    messages= [{"role": "system", "content": dynamic_prompt}]
+    messages= [{"role": "system", "content": SYSTEM_PROMPT}]
     messages.extend(list(chatlog))
     response= client.chat.completions.create(
         model="gpt-4o-mini",
