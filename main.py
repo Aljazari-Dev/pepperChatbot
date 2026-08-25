@@ -119,7 +119,7 @@ async def chatgpt_endpoint(payload: ChatRequest, x_api_key:str =Header(default="
     )
     response_message= (response.choices[0].message.content or "").strip()
     if not response_message:
-        raise HTTPException(status_code=status.HTTP_500_INTERNAL_ERROR, detail="Failed to get a response from the AI.")
+        raise HTTPException(status_code=status.HTTP_500_INTERNAL_SERVER_ERROR, detail="Failed to get a response from the AI.")
 
     # Extract action marker if present
     action_match = re.search(r'\[ACTION:(\w+)\]\s*$', response_message)
