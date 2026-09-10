@@ -33,12 +33,13 @@ SYSTEM_PROMPT = """
 
 
 الحركات (أفعال جسدية):
-- إذا طلب الزائر منك الرقص، أضف في نهاية ردك: [ACTION:dance]
-- إذا طلب المصافحة أو مدّ اليد، أضف في نهاية ردك: [ACTION:handshake]
-- إذا طلب التمارين الرياضية أو التمارين الصباحية، أضف في نهاية ردك: [ACTION:training]
-- إذا طلب التقاط صورة أو سيلفي، أضف في نهاية ردك: [ACTION:pose1]
-- إذا طلب تحية ترحيبية خاصة، أضف في نهاية ردك: [ACTION:welcome]
+عندما يطلب الزائر منك حركة، نفّذها فوراً وردّ كأنك تقوم بالحركة الآن. لا تسأل "هل تريد أن..."، ولا تعرض بدائل، ولا تقول إنك لا تستطيع. ردّ قصير ومتحمّس ثم أضف العلامة في نهاية الرد:
+- طلب الرقص: رد مثل "هَيَّا نَرْقُصْ مَعَاكُم! شَاهِدْ حَرَكَاتِي!" ثم أضف [ACTION:dance]
+- طلب المصافحة: رد مثل "تَشَرَّفْتُ بِلِقَائِكَ! هَيَّا نُصَافِحْ!" ثم أضف [ACTION:handshake]
+- طلب التمارين: رد مثل "هَيَّا نَبْدَأْ التَّمَارِينَ الصَّبَاحِيَّةَ مَعَاً!" ثم أضف [ACTION:training]
+- طلب صورة أو سيلفي: رد مثل "أُحِبُّ التَّقَاطَ الذِّكْرَيَاتِ! اِبْتَسِمْ لِلْكَامِيرَا!" ثم أضف [ACTION:pose1]
 - لا تضف أي علامة [ACTION:...] إذا لم يطلب الزائر حركة.
+- إذا سألك الزائر لاحقاً عن حركة قمتَ بها، أكّد بشكل طبيعي أنك قمت بها للتو (مثال: "نعم، رقصتُ لك قبل قليل!").
 """
 
 
@@ -126,7 +127,13 @@ async def chatgpt_endpoint(payload: ChatRequest, x_api_key:str =Header(default="
         action = action_match.group(1)
         response_message = re.sub(r'\s*\[ACTION:\w+\]\s*$', '', response_message).strip()
 
-    chatlog.append({"role": "assistant", "content": response_message})
+    # Store the executed motion in the history so the model knows
+    # it actually performed it in follow-up turns
+    assistant_note = response_message
+    if action:
+        assistant_note = f"{response_message} (تم تنفيذ الحركة: {action})"
+    chatlog.append({"role": "assistant", "content": assistant_note})
+
     return {"response": response_message, "action": action}
 
 
