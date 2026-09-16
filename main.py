@@ -26,6 +26,7 @@ client = OpenAI(api_key=API_KEY, timeout=10.0)
 MAX_HISTORY = 10
 chatlog = deque(maxlen=MAX_HISTORY)
 interaction_count = 0  # Track number of user interactions
+awaiting_story_topic = False
 
 
 SYSTEM_PROMPT = """
@@ -45,8 +46,9 @@ SYSTEM_PROMPT = """
 - حافظ على محادثة ودية وتفاعلية، واستمع إلى كلام الزائر وأجبه مباشرة. اطرح سؤالا بسيطا واحدا في كل مرة، ولا تكرر قائمة قدراتك في كل رد.
 
 قواعد رواية القصص:
-- إذا قال الزائر إنه يريد قصة من دون أن يذكر موضوعها، اطلب منه أن يقول كلمة واحدة أو موضوعا للقصة. قل مثلا: "قُلْ لِي كَلِمَةً وَاحِدَةً أَوْ مَوْضُوعًا تُحِبُّهُ، وَسَأَحْكِي لَكَ قِصَّةً كَامِلَةً عَنْهُ."
+- إذا قال الزائر إنه يريد قصة من دون أن يذكر موضوعها، اطلب منه أن يقول كلمة واحدة أو موضوعا للقصة. قل مثلا: "قُلْ لِي كَلِمَةً وَاحِدَةً أَوْ مَوْضُوعًا تُحِبُّهُ، وَسَأَحْكِي لَكَ قِصَّةً كَامِلَةً عَنْهُ." ثم أضف [STATE:awaiting_story_topic] في نهاية الرد تماما. هذه علامة داخلية، فلا تشرحها للزائر.
 - إذا ذكر الزائر كلمة أو موضوعا مع طلب القصة، ابدأ القصة فورا ولا تطلب منه الموضوع مرة أخرى.
+- إذا طلبت من الزائر كلمة أو موضوعا في الرد السابق، فاعتبر رده التالي موضوع القصة حتى لو كان كلمة واحدة فقط ولم يكرر طلب القصة. ابدأ القصة فورا، ولا ترحب به مرة أخرى، ولا تطلب الموضوع مرة ثانية، ولا تضف علامة [STATE:awaiting_story_topic].
 - بعد أن يعطيك الزائر الكلمة أو الموضوع، أنشئ قصة كاملة ذات بداية ووسط ونهاية.
 - اجعل مدة القصة عند نطقها من 30 إلى 40 ثانية تقريبا، بما يعادل نحو 65 إلى 90 كلمة عربية. لا تجعلها أطول من ذلك.
 - اجعل القصة مناسبة للأطفال، مرحة، وإيجابية، واختتمها بفكرة أو قيمة تربوية بسيطة.
@@ -119,7 +121,7 @@ async def speak_endpoint(payload: SpeakRequest, x_api_key:str =Header(default=""
 
 @app.post("/chatgpt")
 async def chatgpt_endpoint(payload: ChatRequest, x_api_key:str =Header(default="")):
-    global chatlog, interaction_count
+    global chatlog, interaction_count, awaiting_story_topic
     if api_key_access != x_api_key:
         raise HTTPException(status_code=status.HTTP_401_UNAUTHORIZED, detail="UNAUTHORIZED")
     user_message = payload.query.strip()
@@ -129,6 +131,7 @@ async def chatgpt_endpoint(payload: ChatRequest, x_api_key:str =Header(default="
     # Increment interaction counter
     interaction_count += 1
     
+    pending_story_topic = awaiting_story_topic
     chatlog.append({"role": "user", "content": user_message})
     
     # Build dynamic system prompt with periodic instructions
@@ -138,6 +141,16 @@ async def chatgpt_endpoint(payload: ChatRequest, x_api_key:str =Header(default="
         pass
 
     messages = [{"role": "system", "content": SYSTEM_PROMPT}]
+    if pending_story_topic:
+        messages.append({
+            "role": "system",
+            "content": (
+                "الرد الأخير للزائر هو موضوع القصة الذي طلبته منه. "
+                "إذا لم يلغ الزائر طلبه بوضوح، فابدأ الآن قصة كاملة عن هذا الموضوع. "
+                "لا ترحب به، ولا تعرّف بنفسك، ولا تطلب كلمة أو موضوعا مرة أخرى، "
+                "ولا تكتب علامة [STATE:awaiting_story_topic]."
+            ),
+        })
     messages.extend(list(chatlog))
     response= client.chat.completions.create(
         model="gpt-5-nano",
@@ -146,8 +159,11 @@ async def chatgpt_endpoint(payload: ChatRequest, x_api_key:str =Header(default="
         max_completion_tokens=1000 # Reasoning models spend tokens on internal reasoning
     )
     response_message= (response.choices[0].message.content or "").strip()
-    if not response_message:
-        raise HTTPException(status_code=status.HTTP_500_INTERNAL_SERVER_ERROR, detail="Failed to get a response from the AI.")
+
+    # Track whether Pepper has asked the visitor for a story topic.
+    state_pattern = r'\s*\[STATE:awaiting_story_topic\]\s*$'
+    requested_story_topic = bool(re.search(state_pattern, response_message))
+    response_message = re.sub(state_pattern, '', response_message).strip()
 
     # Extract action marker if present
     action_match = re.search(r'\[ACTION:(\w+)\]\s*$', response_message)
@@ -155,6 +171,14 @@ async def chatgpt_endpoint(payload: ChatRequest, x_api_key:str =Header(default="
     if action_match:
         action = action_match.group(1)
         response_message = re.sub(r'\s*\[ACTION:\w+\]\s*$', '', response_message).strip()
+
+    if not response_message:
+        raise HTTPException(status_code=status.HTTP_500_INTERNAL_SERVER_ERROR, detail="Failed to get a response from the AI.")
+
+    if requested_story_topic:
+        awaiting_story_topic = True
+    elif pending_story_topic:
+        awaiting_story_topic = False
 
     # Store the executed motion in the history so the model knows
     # it actually performed it in follow-up turns
