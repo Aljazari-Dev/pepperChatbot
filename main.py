@@ -59,10 +59,12 @@ SYSTEM_PROMPT = """
 تنسيق النص للنطق الصوتي:
 - اكتب جميع الردود العربية بالعربية الفصحى البسيطة والطبيعية، مع التشكيل الكامل للحروف، مثل: "مَرْحَبًا، إِنِّي رُوبُوتٌ ذَكِيٌّ وَوَدُودٌ."
 - ضع الحركات على الكلمات العربية كلها، بما في ذلك الفتحة والضمة والكسرة والسكون والشدة والتنوين عند الحاجة. لا ترسل نصا عربيا غير مشكول.
+- اجعل الردود مهنية، ودودة، ومباشرة. تجنب الحشو والتكرار والمقدمات غير الضرورية.
+- اجعل الرد العادي قصيرا، من جملة إلى ثلاث جمل فقط، إلا عندما يطلب الزائر قصة أو شرحا يحتاج إلى تفاصيل إضافية.
 - استخدم جملا قصيرة وواضحة، وعلامات ترقيم صحيحة لتوضيح مواضع التوقف.
 - قسم القصة إلى ثلاث أو أربع فقرات قصيرة، وضع سطرا فارغا بين كل فقرتين.
-- استخدم مسافة صحيحة بين الكلمات والجمل.
-- أثناء القصص، لا تستخدم Markdown أو القوائم أو الرموز الزخرفية أو الإيموجي؛ لأن النص سينطقه الروبوت.
+- افصل بين الأفكار المختلفة بسطر فارغ، واستخدم مسافة واحدة صحيحة بين الكلمات والجمل.
+- لا تستخدم Markdown أو القوائم أو الرموز الزخرفية أو الإيموجي في أي رد؛ لأن النص سينطقه الروبوت.
 - لا تكتب تعليمات مسرحية أو تعليقات غير منطوقة داخل القصة.
 
 الحركات (أفعال جسدية):
@@ -84,6 +86,14 @@ class ChatRequest(BaseModel):
 class SpeakRequest(BaseModel):
     text: str
     robot_ip: str = None
+
+
+def format_text_for_tts(text: str) -> str:
+    """Normalize whitespace while preserving intentional paragraph breaks."""
+    text = text.replace("\r\n", "\n").replace("\r", "\n")
+    lines = [re.sub(r"[ \t]+", " ", line).strip() for line in text.split("\n")]
+    text = "\n".join(lines)
+    return re.sub(r"\n{3,}", "\n\n", text).strip()
 
 @app.get("/")
 async def root():
@@ -170,7 +180,7 @@ async def chatgpt_endpoint(payload: ChatRequest, x_api_key:str =Header(default="
         model="gpt-5-nano",
         messages= messages,
         reasoning_effort="minimal",
-        max_completion_tokens=1000 # Reasoning models spend tokens on internal reasoning
+        max_completion_tokens=600 # Leaves room for a fully vocalized 30-40 second story.
     )
     response_message= (response.choices[0].message.content or "").strip()
 
@@ -185,6 +195,8 @@ async def chatgpt_endpoint(payload: ChatRequest, x_api_key:str =Header(default="
     if action_match:
         action = action_match.group(1)
         response_message = re.sub(r'\s*\[ACTION:\w+\]\s*$', '', response_message).strip()
+
+    response_message = format_text_for_tts(response_message)
 
     if not response_message:
         raise HTTPException(status_code=status.HTTP_500_INTERNAL_SERVER_ERROR, detail="Failed to get a response from the AI.")
