@@ -20,6 +20,10 @@ ROBOT_SPEAK_PORT = int(os.getenv("ROBOT_SPEAK_PORT", "8080"))
 OPENAI_MODEL = os.getenv("OPENAI_MODEL", "gpt-5-nano")
 OPENAI_TIMEOUT_SECONDS = float(os.getenv("OPENAI_TIMEOUT_SECONDS", "30"))
 OPENAI_MAX_RETRIES = int(os.getenv("OPENAI_MAX_RETRIES", "2"))
+OPENAI_REASONING_EFFORT = os.getenv("OPENAI_REASONING_EFFORT", "minimal")
+OPENAI_MAX_COMPLETION_TOKENS = int(
+    os.getenv("OPENAI_MAX_COMPLETION_TOKENS", "2000")
+)
 if not API_KEY:
     raise ValueError("OPENAI_API_KEY not found in environment variables.")
 
@@ -270,9 +274,37 @@ async def chatgpt_endpoint(payload: ChatRequest, x_api_key:str =Header(default="
             response = await client.chat.completions.create(
                 model=OPENAI_MODEL,
                 messages=messages,
-                reasoning_effort="low",
-                max_completion_tokens=600,
+                reasoning_effort=OPENAI_REASONING_EFFORT,
+                max_completion_tokens=OPENAI_MAX_COMPLETION_TOKENS,
             )
+
+            # A reasoning model can spend the full completion budget before
+            # producing visible text. Retry that specific case once with more
+            # room instead of returning an avoidable 502 to the robot.
+            first_choice = response.choices[0] if response.choices else None
+            first_content = (
+                (first_choice.message.content or "").strip()
+                if first_choice is not None
+                else ""
+            )
+            if (
+                not first_content
+                and first_choice is not None
+                and getattr(first_choice, "finish_reason", None) == "length"
+            ):
+                retry_token_limit = max(4000, OPENAI_MAX_COMPLETION_TOKENS * 2)
+                logger.warning(
+                    "OpenAI exhausted the completion budget; retrying "
+                    "request_id=%s token_limit=%s",
+                    getattr(response, "_request_id", None),
+                    retry_token_limit,
+                )
+                response = await client.chat.completions.create(
+                    model=OPENAI_MODEL,
+                    messages=messages,
+                    reasoning_effort=OPENAI_REASONING_EFFORT,
+                    max_completion_tokens=retry_token_limit,
+                )
         except openai.APITimeoutError as exc:
             logger.exception("OpenAI request timed out: %s", exc)
             raise HTTPException(
@@ -310,8 +342,9 @@ async def chatgpt_endpoint(payload: ChatRequest, x_api_key:str =Header(default="
 
         if not response.choices:
             logger.error(
-                "OpenAI returned no choices request_id=%s",
+                "OpenAI returned no choices request_id=%s usage=%s",
                 getattr(response, "_request_id", None),
+                getattr(response, "usage", None),
             )
             raise HTTPException(
                 status_code=status.HTTP_502_BAD_GATEWAY,
@@ -333,9 +366,14 @@ async def chatgpt_endpoint(payload: ChatRequest, x_api_key:str =Header(default="
 
         response_message = format_text_for_tts(response_message)
         if not response_message:
+            choice = response.choices[0]
             logger.error(
-                "OpenAI returned empty content request_id=%s",
+                "OpenAI returned empty content request_id=%s "
+                "finish_reason=%s usage=%s refusal=%s",
                 getattr(response, "_request_id", None),
+                getattr(choice, "finish_reason", None),
+                getattr(response, "usage", None),
+                getattr(choice.message, "refusal", None),
             )
             raise HTTPException(
                 status_code=status.HTTP_502_BAD_GATEWAY,
