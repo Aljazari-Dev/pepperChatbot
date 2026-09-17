@@ -108,11 +108,62 @@ class SpeakRequest(BaseModel):
 
 
 def format_text_for_tts(text: str) -> str:
-    """Normalize whitespace while preserving intentional paragraph breaks."""
+    """Normalize spacing while preserving intentional paragraph breaks."""
     text = text.replace("\r\n", "\n").replace("\r", "\n")
     lines = [re.sub(r"[ \t]+", " ", line).strip() for line in text.split("\n")]
     text = "\n".join(lines)
+    text = re.sub(r"\s+([،؛:,.!?؟])", r"\1", text)
+    text = re.sub(r"([،؛:,.!?؟])(?=[^\s\n])", r"\1 ", text)
     return re.sub(r"\n{3,}", "\n\n", text).strip()
+
+
+def format_story_for_tts(text: str) -> str:
+    """Create three or four clearly separated paragraphs for spoken stories."""
+    text = format_text_for_tts(text)
+    flat_text = re.sub(r"\s*\n+\s*", " ", text).strip()
+    if not flat_text:
+        return ""
+
+    units = [
+        part.strip()
+        for part in re.findall(r"[^.!?؟]+(?:[.!?؟]+|$)", flat_text)
+        if part.strip()
+    ]
+
+    # Some model responses contain few full stops. Use natural clause pauses,
+    # then word groups as a final fallback so the robot never rushes a story.
+    if len(units) < 3:
+        units = [
+            part.strip()
+            for part in re.findall(r"[^،؛]+(?:[،؛]+|$)", flat_text)
+            if part.strip()
+        ]
+    if len(units) < 3:
+        words = flat_text.split()
+        if len(words) >= 18:
+            paragraph_count = 3
+            units = []
+            for index in range(paragraph_count):
+                start = round(index * len(words) / paragraph_count)
+                end = round((index + 1) * len(words) / paragraph_count)
+                unit = " ".join(words[start:end]).strip()
+                if unit and index < paragraph_count - 1:
+                    unit = unit.rstrip("،؛:,.!?؟") + "."
+                units.append(unit)
+
+    if len(units) < 2:
+        return flat_text
+
+    paragraph_count = 4 if len(units) >= 7 else min(3, len(units))
+    paragraphs = []
+    for index in range(paragraph_count):
+        start = round(index * len(units) / paragraph_count)
+        end = round((index + 1) * len(units) / paragraph_count)
+        paragraph = " ".join(units[start:end]).strip()
+        if paragraph:
+            paragraphs.append(paragraph)
+
+    return "\n\n".join(paragraphs)
 
 
 def normalize_for_intent(text: str) -> str:
@@ -259,7 +310,8 @@ async def chatgpt_endpoint(payload: ChatRequest, x_api_key:str =Header(default="
                     "يحتوي كلام الزائر الحالي بالفعل على موضوع القصة. "
                     "ابدأ الآن قصة كاملة عن ذلك الموضوع مباشرة. "
                     "لا تطلب كلمة أو موضوعا، ولا تسأل أي سؤال، ولا تضف تحية. "
-                    "اجعل القصة من 65 إلى 90 كلمة عربية، ولها بداية ووسط ونهاية."
+                    "اجعل القصة من 65 إلى 90 كلمة عربية، ولها بداية ووسط ونهاية. "
+                    "قسّمها إلى ثلاث أو أربع فقرات قصيرة، وضع سطرا فارغا بين الفقرات."
                 ),
             })
         elif story_cancelled:
@@ -364,7 +416,10 @@ async def chatgpt_endpoint(payload: ChatRequest, x_api_key:str =Header(default="
                 r'\s*\[ACTION:\w+\]\s*$', '', response_message
             ).strip()
 
-        response_message = format_text_for_tts(response_message)
+        if force_story:
+            response_message = format_story_for_tts(response_message)
+        else:
+            response_message = format_text_for_tts(response_message)
         if not response_message:
             choice = response.choices[0]
             logger.error(
