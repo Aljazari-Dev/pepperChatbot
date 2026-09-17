@@ -1,11 +1,13 @@
+import asyncio
+import logging
 import os
 import re
-from openai import OpenAI
+import openai
+from openai import AsyncOpenAI
 from dotenv import load_dotenv
 from collections import deque
 import json
-import fastapi
-from fastapi import FastAPI, Request, HTTPException, status , Header
+from fastapi import FastAPI, HTTPException, status, Header
 from pydantic import BaseModel
 import urllib.request
 import urllib.error
@@ -15,18 +17,31 @@ api_key_access=os.getenv("api_access_key")
 API_KEY = os.getenv("OPENAI_API_KEY")
 ROBOT_IP = os.getenv("ROBOT_IP", "192.168.1.100")
 ROBOT_SPEAK_PORT = int(os.getenv("ROBOT_SPEAK_PORT", "8080"))
+OPENAI_MODEL = os.getenv("OPENAI_MODEL", "gpt-5-nano")
+OPENAI_TIMEOUT_SECONDS = float(os.getenv("OPENAI_TIMEOUT_SECONDS", "30"))
+OPENAI_MAX_RETRIES = int(os.getenv("OPENAI_MAX_RETRIES", "2"))
 if not API_KEY:
     raise ValueError("OPENAI_API_KEY not found in environment variables.")
 
 app = FastAPI()
+logger = logging.getLogger("pepper")
 
-client = OpenAI(api_key=API_KEY, timeout=10.0)
+client = AsyncOpenAI(
+    api_key=API_KEY,
+    timeout=OPENAI_TIMEOUT_SECONDS,
+    max_retries=OPENAI_MAX_RETRIES,
+)
 
   
 MAX_HISTORY = 20
 chatlog = deque(maxlen=MAX_HISTORY)
-interaction_count = 0  # Track number of user interactions
 awaiting_story_topic = False
+chat_lock = asyncio.Lock()
+
+STORY_TOPIC_QUESTION = (
+    "قُلْ لِي كَلِمَةً وَاحِدَةً أَوْ مَوْضُوعًا تُحِبُّهُ، "
+    "وَسَأَحْكِي لَكَ قِصَّةً كَامِلَةً عَنْهُ."
+)
 
 
 SYSTEM_PROMPT = """
@@ -48,9 +63,9 @@ SYSTEM_PROMPT = """
 - حافظ على محادثة ودية وتفاعلية، واستمع إلى كلام الزائر وأجبه مباشرة. اطرح سؤالا بسيطا واحدا عند الحاجة، ولا تكرر قائمة قدراتك.
 
 قواعد رواية القصص:
-- إذا قال الزائر إنه يريد قصة من دون أن يذكر موضوعها، اطلب منه أن يقول كلمة واحدة أو موضوعا للقصة. قل مثلا: "قُلْ لِي كَلِمَةً وَاحِدَةً أَوْ مَوْضُوعًا تُحِبُّهُ، وَسَأَحْكِي لَكَ قِصَّةً كَامِلَةً عَنْهُ." ثم أضف [STATE:awaiting_story_topic] في نهاية الرد تماما. هذه علامة داخلية، فلا تشرحها للزائر.
+- إذا قال الزائر إنه يريد قصة من دون أن يذكر موضوعها، اطلب منه أن يقول كلمة واحدة أو موضوعا للقصة.
 - إذا ذكر الزائر كلمة أو موضوعا مع طلب القصة، ابدأ القصة فورا ولا تطلب منه الموضوع مرة أخرى.
-- إذا طلبت من الزائر كلمة أو موضوعا في الرد السابق، فاعتبر رده التالي موضوع القصة حتى لو كان كلمة واحدة فقط ولم يكرر طلب القصة. ابدأ القصة فورا، ولا ترحب به مرة أخرى، ولا تطلب الموضوع مرة ثانية، ولا تضف علامة [STATE:awaiting_story_topic].
+- إذا طلبت من الزائر كلمة أو موضوعا في الرد السابق، فاعتبر رده التالي موضوع القصة حتى لو كان كلمة واحدة فقط ولم يكرر طلب القصة. ابدأ القصة فورا، ولا ترحب به مرة أخرى، ولا تطلب الموضوع مرة ثانية.
 - بعد أن يعطيك الزائر الكلمة أو الموضوع، أنشئ قصة كاملة ذات بداية ووسط ونهاية.
 - اجعل مدة القصة عند نطقها من 30 إلى 40 ثانية تقريبا، بما يعادل نحو 65 إلى 90 كلمة عربية. لا تجعلها أطول من ذلك.
 - اجعل القصة مناسبة للأطفال، مرحة، وإيجابية، واختتمها بفكرة أو قيمة تربوية بسيطة.
@@ -95,6 +110,63 @@ def format_text_for_tts(text: str) -> str:
     text = "\n".join(lines)
     return re.sub(r"\n{3,}", "\n\n", text).strip()
 
+
+def normalize_for_intent(text: str) -> str:
+    """Normalize English and Arabic text for lightweight intent checks."""
+    text = text.lower()
+    text = re.sub(r"[\u064b-\u065f\u0670]", "", text)
+    text = text.translate(str.maketrans({
+        "أ": "ا",
+        "إ": "ا",
+        "آ": "ا",
+        "ى": "ي",
+        "ة": "ه",
+    }))
+    text = re.sub(r"[^a-z0-9\u0600-\u06ff\s]", " ", text)
+    return re.sub(r"\s+", " ", text).strip()
+
+
+def analyze_story_request(text: str) -> tuple[bool, bool]:
+    """Return (is_story_request, topic_is_present)."""
+    normalized = normalize_for_intent(text)
+    tokens = normalized.split()
+    story_words = {"story", "tale", "قصه", "حكايه"}
+    if not story_words.intersection(tokens):
+        return False, False
+
+    request_words = {
+        "a", "about", "an", "can", "children", "could", "create", "funny",
+        "give", "good", "hear", "i", "kid", "kids", "like", "make", "me",
+        "need", "nice", "of", "on", "one", "please", "s", "short", "some",
+        "tell", "the", "to", "want", "will", "would", "write", "you",
+        "ابغي", "احد", "احك", "احكي", "احكيلي", "اريد", "اروي", "اسمع",
+        "اطفال", "اعطني", "ان", "اود", "تحكيلي", "تروي", "تستطيع", "تعطيني", "تقدر",
+        "جيده", "جميله", "حدثني", "حلوه", "حول", "عن", "قصيره", "للاطفال",
+        "لي", "لو", "ما", "من", "منك", "ممتعه", "ممكن", "واحده", "هل",
+    }
+    topic_is_present = any(
+        token not in story_words and token not in request_words
+        for token in tokens
+    )
+    return True, topic_is_present
+
+
+def is_story_cancellation(text: str) -> bool:
+    normalized = normalize_for_intent(text)
+    return bool(re.search(
+        r"\b(?:cancel|stop|nevermind|never mind|no story|"
+        r"do not want (?:a )?story|don t want (?:a )?story)\b|"
+        r"(?:الغ|الغي|توقف|خلاص|لا اريد قصه|ما اريد قصه)",
+        normalized,
+    ))
+
+
+def append_exchange(user_message: str, assistant_message: str) -> None:
+    """Commit a complete exchange so failed requests never pollute history."""
+    chatlog.append({"role": "user", "content": user_message})
+    chatlog.append({"role": "assistant", "content": assistant_message})
+
+
 @app.get("/")
 async def root():
     return {"message": "Hello World"}
@@ -126,94 +198,159 @@ async def speak_endpoint(payload: SpeakRequest, x_api_key:str =Header(default=""
     text = payload.text.strip()
     if not text:
         raise HTTPException(status_code=status.HTTP_400_BAD_REQUEST, detail="text is required.")
-    result = send_speak_to_robot(text, payload.robot_ip)
+    result = await asyncio.to_thread(send_speak_to_robot, text, payload.robot_ip)
     return {"status": "sent", "result": result}
 
 
 
 @app.post("/chatgpt")
 async def chatgpt_endpoint(payload: ChatRequest, x_api_key:str =Header(default="")):
-    global chatlog, interaction_count, awaiting_story_topic
+    global awaiting_story_topic
     if api_key_access != x_api_key:
         raise HTTPException(status_code=status.HTTP_401_UNAUTHORIZED, detail="UNAUTHORIZED")
     user_message = payload.query.strip()
     if not user_message:
         raise HTTPException(status_code=status.HTTP_400_BAD_REQUEST, detail="Query parameter is required.")
-    
-    # Increment interaction counter
-    interaction_count += 1
-    
-    pending_story_topic = awaiting_story_topic
-    continuing_conversation = any(
-        message["role"] == "assistant" for message in chatlog
-    )
-    chatlog.append({"role": "user", "content": user_message})
-    
-    # Build dynamic system prompt with periodic instructions
-    
-    # Every 2-3 interactions, add visitor guidance instruction
-    if interaction_count % 2 == 0 or interaction_count % 3 == 0:
-        pass
 
-    messages = [{"role": "system", "content": SYSTEM_PROMPT}]
-    if continuing_conversation:
-        messages.append({
-            "role": "system",
-            "content": (
-                "هذه رسالة ضمن محادثة مستمرة وليست بداية محادثة جديدة. "
-                "أجب عن رسالة الزائر مباشرة. لا ترحب به، ولا تعرّف بنفسك، "
-                "ولا تذكر اسمك أو مكانك أو قدراتك إلا إذا طلب ذلك صراحة."
-            ),
-        })
-    if pending_story_topic:
-        messages.append({
-            "role": "system",
-            "content": (
-                "الرد الأخير للزائر هو موضوع القصة الذي طلبته منه. "
-                "إذا لم يلغ الزائر طلبه بوضوح، فابدأ الآن قصة كاملة عن هذا الموضوع. "
-                "لا ترحب به، ولا تعرّف بنفسك، ولا تطلب كلمة أو موضوعا مرة أخرى، "
-                "ولا تكتب علامة [STATE:awaiting_story_topic]."
-            ),
-        })
-    messages.extend(list(chatlog))
-    response= client.chat.completions.create(
-        model="gpt-5-nano",
-        messages= messages,
-        reasoning_effort="minimal",
-        max_completion_tokens=600 # Leaves room for a fully vocalized 30-40 second story.
-    )
-    response_message= (response.choices[0].message.content or "").strip()
+    # One physical robot has one conversation. Serializing requests keeps that
+    # shared state ordered when two HTTP calls arrive at nearly the same time.
+    async with chat_lock:
+        pending_story_topic = awaiting_story_topic
+        story_requested, story_has_topic = analyze_story_request(user_message)
+        cancellation_requested = is_story_cancellation(user_message)
+        story_cancelled = pending_story_topic and cancellation_requested
 
-    # Track whether Pepper has asked the visitor for a story topic.
-    state_pattern = r'\s*\[STATE:awaiting_story_topic\]\s*$'
-    requested_story_topic = bool(re.search(state_pattern, response_message))
-    response_message = re.sub(state_pattern, '', response_message).strip()
+        needs_story_topic = (
+            story_requested
+            and not story_has_topic
+            and not cancellation_requested
+        )
+        if needs_story_topic:
+            awaiting_story_topic = True
+            append_exchange(user_message, STORY_TOPIC_QUESTION)
+            return {"response": STORY_TOPIC_QUESTION, "action": None}
 
-    # Extract action marker if present
-    action_match = re.search(r'\[ACTION:(\w+)\]\s*$', response_message)
-    action = None
-    if action_match:
-        action = action_match.group(1)
-        response_message = re.sub(r'\s*\[ACTION:\w+\]\s*$', '', response_message).strip()
+        force_story = (
+            (pending_story_topic and not story_cancelled)
+            or (story_requested and story_has_topic and not cancellation_requested)
+        )
+        continuing_conversation = any(
+            message["role"] == "assistant" for message in chatlog
+        )
 
-    response_message = format_text_for_tts(response_message)
+        messages = [{"role": "system", "content": SYSTEM_PROMPT}]
+        if continuing_conversation:
+            messages.append({
+                "role": "system",
+                "content": (
+                    "هذه رسالة ضمن محادثة مستمرة وليست بداية محادثة جديدة. "
+                    "أجب عن رسالة الزائر مباشرة. لا ترحب به، ولا تعرّف بنفسك، "
+                    "ولا تذكر اسمك أو مكانك أو قدراتك إلا إذا طلب ذلك صراحة."
+                ),
+            })
+        if force_story:
+            messages.append({
+                "role": "system",
+                "content": (
+                    "يحتوي كلام الزائر الحالي بالفعل على موضوع القصة. "
+                    "ابدأ الآن قصة كاملة عن ذلك الموضوع مباشرة. "
+                    "لا تطلب كلمة أو موضوعا، ولا تسأل أي سؤال، ولا تضف تحية. "
+                    "اجعل القصة من 65 إلى 90 كلمة عربية، ولها بداية ووسط ونهاية."
+                ),
+            })
+        elif story_cancelled:
+            messages.append({
+                "role": "system",
+                "content": "ألغى الزائر طلب القصة. أكّد الإلغاء بإيجاز ولا تبدأ قصة.",
+            })
+        messages.extend(list(chatlog))
+        messages.append({"role": "user", "content": user_message})
 
-    if not response_message:
-        raise HTTPException(status_code=status.HTTP_500_INTERNAL_SERVER_ERROR, detail="Failed to get a response from the AI.")
+        try:
+            response = await client.chat.completions.create(
+                model=OPENAI_MODEL,
+                messages=messages,
+                reasoning_effort="low",
+                max_completion_tokens=600,
+            )
+        except openai.APITimeoutError as exc:
+            logger.exception("OpenAI request timed out: %s", exc)
+            raise HTTPException(
+                status_code=status.HTTP_504_GATEWAY_TIMEOUT,
+                detail="The AI service timed out. Please try again.",
+            ) from exc
+        except openai.RateLimitError as exc:
+            logger.exception("OpenAI rate limit: %s", exc)
+            raise HTTPException(
+                status_code=status.HTTP_503_SERVICE_UNAVAILABLE,
+                detail="The AI service is busy. Please try again shortly.",
+            ) from exc
+        except openai.APIConnectionError as exc:
+            logger.exception("OpenAI connection error: %s", exc)
+            raise HTTPException(
+                status_code=status.HTTP_502_BAD_GATEWAY,
+                detail="Could not connect to the AI service.",
+            ) from exc
+        except openai.APIStatusError as exc:
+            logger.exception(
+                "OpenAI API error status=%s request_id=%s",
+                exc.status_code,
+                getattr(exc, "request_id", None),
+            )
+            raise HTTPException(
+                status_code=status.HTTP_502_BAD_GATEWAY,
+                detail="The AI service returned an error.",
+            ) from exc
+        except Exception as exc:
+            logger.exception("Unexpected chat error")
+            raise HTTPException(
+                status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
+                detail="Unexpected chat error.",
+            ) from exc
 
-    if requested_story_topic:
-        awaiting_story_topic = True
-    elif pending_story_topic:
-        awaiting_story_topic = False
+        if not response.choices:
+            logger.error(
+                "OpenAI returned no choices request_id=%s",
+                getattr(response, "_request_id", None),
+            )
+            raise HTTPException(
+                status_code=status.HTTP_502_BAD_GATEWAY,
+                detail="The AI service returned an empty response.",
+            )
 
-    # Store the executed motion in the history so the model knows
-    # it actually performed it in follow-up turns
-    assistant_note = response_message
-    if action:
-        assistant_note = f"{response_message} (تم تنفيذ الحركة: {action})"
-    chatlog.append({"role": "assistant", "content": assistant_note})
+        response_message = (response.choices[0].message.content or "").strip()
+        response_message = re.sub(
+            r'\s*\[STATE:awaiting_story_topic\]\s*$', '', response_message
+        ).strip()
 
-    return {"response": response_message, "action": action}
+        action_match = re.search(r'\[ACTION:(\w+)\]\s*$', response_message)
+        action = None
+        if action_match:
+            action = action_match.group(1)
+            response_message = re.sub(
+                r'\s*\[ACTION:\w+\]\s*$', '', response_message
+            ).strip()
+
+        response_message = format_text_for_tts(response_message)
+        if not response_message:
+            logger.error(
+                "OpenAI returned empty content request_id=%s",
+                getattr(response, "_request_id", None),
+            )
+            raise HTTPException(
+                status_code=status.HTTP_502_BAD_GATEWAY,
+                detail="The AI service returned an empty response.",
+            )
+
+        if force_story or story_cancelled:
+            awaiting_story_topic = False
+
+        assistant_note = response_message
+        if action:
+            assistant_note = f"{response_message} (تم تنفيذ الحركة: {action})"
+        append_exchange(user_message, assistant_note)
+
+        return {"response": response_message, "action": action}
 
 
 if __name__ == "__main__":
